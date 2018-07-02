@@ -1,0 +1,237 @@
+[
+  {
+    "id": "9c0e070c.533668",
+    "type": "function",
+    "z": "3475db8e.050864",
+    "name": "Headers",
+    "func": "msg.headers = {\n    \"Content-Type\": \"application/x-www-form-urlencoded\",\n    \"Accept\": \"application/json\"\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 377,
+    "y": 231,
+    "wires": [
+      [
+        "6ac10bee.12fde4"
+      ]
+    ]
+  },
+  {
+    "id": "20800118.008b2e",
+    "type": "http in",
+    "z": "3475db8e.050864",
+    "name": "Endpoint",
+    "url": "/data",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 60,
+    "y": 440,
+    "wires": [
+      [
+        "e7ed9d79.d8593"
+      ]
+    ]
+  },
+  {
+    "id": "e644e806.573ba8",
+    "type": "inject",
+    "z": "3475db8e.050864",
+    "name": "REST API",
+    "topic": "authorize",
+    "payload": "",
+    "payloadType": "str",
+    "repeat": "1740",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "",
+    "x": 90,
+    "y": 180,
+    "wires": [
+      [
+        "2bea3465.a6490c"
+      ]
+    ]
+  },
+  {
+    "id": "584e4e2f.5907",
+    "type": "http request",
+    "z": "3475db8e.050864",
+    "name": "Token",
+    "method": "POST",
+    "ret": "obj",
+    "url": "https://io.catchpoint.com/ui/api/token",
+    "tls": "",
+    "x": 627,
+    "y": 231,
+    "wires": [
+      [
+        "98ba76c9.ca9ed8"
+      ]
+    ]
+  },
+  {
+    "id": "6ac10bee.12fde4",
+    "type": "template",
+    "z": "3475db8e.050864",
+    "name": "Body",
+    "field": "payload",
+    "fieldType": "msg",
+    "format": "handlebars",
+    "syntax": "mustache",
+    "template": "grant_type=client_credentials&client_id={{credentials.key}}&client_secret={{credentials.secret}}",
+    "output": "str",
+    "x": 507,
+    "y": 231,
+    "wires": [
+      [
+        "584e4e2f.5907"
+      ]
+    ]
+  },
+  {
+    "id": "98ba76c9.ca9ed8",
+    "type": "function",
+    "z": "3475db8e.050864",
+    "name": "Base64",
+    "func": "var token = new Buffer.from(msg.payload.access_token).toString('base64');\n\nglobal.set(\"token\", token);\n",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 757,
+    "y": 231,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "2bea3465.a6490c",
+    "type": "function",
+    "z": "3475db8e.050864",
+    "name": "Credentials",
+    "func": "msg.credentials = {\n    key: \"xxxxxxxxxxxxx\",\n    secret: \"xxxxxxxxxxxxxxxxxxxxxxxx\"\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 227,
+    "y": 231,
+    "wires": [
+      [
+        "9c0e070c.533668"
+      ]
+    ]
+  },
+  {
+    "id": "4f47f75e.6bc978",
+    "type": "debug",
+    "z": "3475db8e.050864",
+    "name": "",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "x": 470,
+    "y": 760,
+    "wires": []
+  },
+  {
+    "id": "c6a87b1.093e188",
+    "type": "inject",
+    "z": "3475db8e.050864",
+    "name": "",
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "",
+    "x": 90,
+    "y": 300,
+    "wires": [
+      [
+        "cf19e5a8.2940d8"
+      ]
+    ]
+  },
+  {
+    "id": "cf19e5a8.2940d8",
+    "type": "function",
+    "z": "3475db8e.050864",
+    "name": "Bearer",
+    "func": "msg.headers = {\n    \"Authorization\" : \"Bearer \" + global.get('token'),\n    \"Accept\": \"application/json\"\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 190,
+    "y": 340,
+    "wires": [
+      [
+        "8fd76b76.de2e38"
+      ]
+    ]
+  },
+  {
+    "id": "8fd76b76.de2e38",
+    "type": "http request",
+    "z": "3475db8e.050864",
+    "name": "nodes",
+    "method": "GET",
+    "ret": "obj",
+    "url": "https://io.catchpoint.com/ui/api/v1/nodes",
+    "tls": "",
+    "x": 330,
+    "y": 340,
+    "wires": [
+      [
+        "ccc8f7f5.0ec7d8"
+      ]
+    ]
+  },
+  {
+    "id": "ccc8f7f5.0ec7d8",
+    "type": "function",
+    "z": "3475db8e.050864",
+    "name": "Parse Response",
+    "func": "var map = [];\n\nfor (j = 0; j < msg.payload.items.length; j++) {\n    if (msg.payload.items[j].coordinates) {\n        map.push({\n            'name' : msg.payload.items[j].name,\n            'lat' : msg.payload.items[j].coordinates.latitude,\n            'lon' : msg.payload.items[j].coordinates.longitude\n        })\n    }\n}\n\nmsg.payload = map;\nglobal.set(\"map\", map);\ndelete msg.payload.items;\nreturn msg;\n\n",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 500,
+    "y": 340,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "abffc01c.a598c",
+    "type": "worldmap",
+    "z": "3475db8e.050864",
+    "name": "",
+    "lat": "",
+    "lon": "",
+    "zoom": "3",
+    "layer": "Esri",
+    "cluster": "0",
+    "maxage": "",
+    "usermenu": "show",
+    "layers": "show",
+    "panit": "false",
+    "x": 670,
+    "y": 600,
+    "wires": []
+  },
+  {
+    "id": "e7ed9d79.d8593",
+    "type": "function",
+    "z": "3475db8e.050864",
+    "name": "Json Parse",
+    "func": "var map= global.get('map');\n\nvar details; \nfor(var i=0;i<map.length;i++)\n{\n    if(msg.payload.NodeName==map[i].name)\n    {\n        details={ 'Test Name': msg.payload.TestDetail.Name, \n            'name': msg.payload.NodeName, \n            'lat': map[i].lat, \n            'lon': map[i].lon, \n            'Response': msg.payload.Summary.Timing.Total,\n            'DNS':msg.payload.Summary.Timing.Dns,\n            'icon': 'fa-map-marker'\n    \n    };\n    \n    }\n    \n}\n\nmsg.payload=details;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 270,
+    "y": 520,
+    "wires": [
+      [
+        "abffc01c.a598c",
+        "4f47f75e.6bc978"
+      ]
+    ]
+  }
+]
